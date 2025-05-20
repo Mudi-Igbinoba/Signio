@@ -13,7 +13,17 @@ export default function Dashboard() {
   const id = nanoid();
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
   const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
-  const [pdfData, setPdfData] = useState<{ id: string; file: File }[]>([]);
+  const [pdfData, setPdfData] = useState<
+    {
+      id: string;
+      name: string;
+      size: number;
+      type: string;
+      lastModified: number;
+      path: string;
+      content: string | ArrayBuffer | null;
+    }[]
+  >([]);
 
   // Load pdfData from localStorage in the browser
   useEffect(() => {
@@ -50,14 +60,26 @@ export default function Dashboard() {
   };
 
   const handleSubmit = () => {
-    const fileData = {
-      file: acceptedFiles[0],
-      id
+    const file = acceptedFiles[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const fileData = {
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        path: file.webkitRelativePath || '',
+        content: reader.result // Base64 content
+      };
+
+      const updatedPdfData = [...pdfData, fileData];
+      setPdfData(updatedPdfData);
+      localStorage.setItem('pdfData', JSON.stringify(updatedPdfData));
     };
 
-    const updatedPdfData = [...pdfData, fileData];
-    setPdfData(updatedPdfData); // Update state
-    localStorage.setItem('pdfData', JSON.stringify(updatedPdfData)); // Persist to localStorage
+    reader.readAsDataURL(file); // Read file as Base64
   };
 
   return (

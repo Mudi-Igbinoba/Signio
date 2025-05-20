@@ -2,9 +2,12 @@
 
 import { Progress } from '@/components/ui/progress';
 import { PenTool } from 'lucide-react';
+import Script from 'next/script';
 import { use, useEffect, useState } from 'react';
+import ViewSDKClient from '@/lib/ViewSDKClient';
 
 export default function PdfPage(props: { params: Promise<{ id: string }> }) {
+  const viewSDKClient = new ViewSDKClient();
   const params = use(props.params);
 
   const id = params.id;
@@ -31,6 +34,38 @@ export default function PdfPage(props: { params: Promise<{ id: string }> }) {
     return () => clearInterval(timer); // Cleanup the interval on component unmount
   }, []);
 
+  useEffect(() => {
+    const data = pdfData.find((e: { id: string }) => e.id === id);
+    const { name, content, type, lastModified } = data;
+
+    // Decode Base64 content and create a Blob
+    const byteString = atob(content.split(',')[1]); // Remove the Base64 prefix
+    const byteArray = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      byteArray[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([byteArray], { type });
+
+    // Create a File object from the Blob
+    const file = new File([blob], name, { type, lastModified });
+
+    viewSDKClient.ready().then(() => {
+      const fileName = file.name;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const binaryStr = reader.result;
+        const filePromise = Promise.resolve(binaryStr);
+        /* Helper function to render the file using PDF Embed API. */
+        viewSDKClient.previewFileUsingFilePromise(
+          'pdf-div',
+          filePromise,
+          fileName
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }, [0]);
+
   if (progress < 100) {
     return (
       <div className='flex flex-col gap-y-2 h-full justify-center items-center'>
@@ -44,5 +79,14 @@ export default function PdfPage(props: { params: Promise<{ id: string }> }) {
     );
   }
 
-  return <div className='flex justify-center items-center'>PDF</div>;
+  return (
+    <div id='pdf-div' className='flex justify-center items-center h-full '>
+      <p>Getting ready....</p>
+
+      <Script
+        type='text/javascript'
+        src='https://acrobatservices.adobe.com/view-sdk/viewer.js'
+      />
+    </div>
+  );
 }
