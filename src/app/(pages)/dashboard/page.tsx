@@ -6,17 +6,20 @@ import clsx from 'clsx';
 import { CloudAlert, CloudUpload, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Dropzone, { FileRejection } from 'react-dropzone';
 
 export default function Dashboard() {
   const id = nanoid();
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
   const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
-  const pdfData: {
-    id: string;
-    file: File;
-  }[] = JSON.parse(localStorage.getItem('pdfData') || '[]');
+  const [pdfData, setPdfData] = useState<{ id: string; file: File }[]>([]);
+
+  // Load pdfData from localStorage in the browser
+  useEffect(() => {
+    const storedPdfData = JSON.parse(localStorage.getItem('pdfData') || '[]');
+    setPdfData(storedPdfData);
+  }, []);
 
   const onDrop = useCallback((accepted: File[], rejected: FileRejection[]) => {
     console.log(accepted, 'accepted');
@@ -52,7 +55,9 @@ export default function Dashboard() {
       id
     };
 
-    localStorage.setItem('pdfData', JSON.stringify([...pdfData, fileData]));
+    const updatedPdfData = [...pdfData, fileData];
+    setPdfData(updatedPdfData); // Update state
+    localStorage.setItem('pdfData', JSON.stringify(updatedPdfData)); // Persist to localStorage
   };
 
   return (

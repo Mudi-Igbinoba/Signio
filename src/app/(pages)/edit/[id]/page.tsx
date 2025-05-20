@@ -14,7 +14,7 @@ export default function PdfPage(props: { params: Promise<{ id: string }> }) {
   const [progress, setProgress] = useState(0);
 
   if (progress === 100) {
-    console.log(pdfData.find((e) => e.id === id));
+    console.log(pdfData.find((e: { id: string }) => e.id === id));
   }
 
   useEffect(() => {
