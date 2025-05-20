@@ -1,7 +1,7 @@
 'use client';
 
 import { Progress } from '@/components/ui/progress';
-import { Cloud, PenTool } from 'lucide-react';
+import { PenTool } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
 
 export default function PdfPage(props: { params: Promise<{ id: string }> }) {
